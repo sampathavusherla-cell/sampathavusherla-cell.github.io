@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sampath Avusherla — Business Intelligence Analyst</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #1E2761;
+    --navy-deep: #141A46;
+    --ice: #CADCFC;
+    --ice-tint: #EEF3FE;
+    --gold: #E8A33D;
+    --canvas: #F1F3F9;
+    --card: #FFFFFF;
+    --muted: #5B6B9C;
+    --text: #1A2140;
+    --line: #E2E7F5;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--canvas);
+    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  .display{ font-family:'Space Grotesk','Avenir Next','Century Gothic',sans-serif; }
+  .mono{ font-family:'IBM Plex Mono','SFMono-Regular',Menlo,monospace; }
+
+  .app{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 20px 100px;
+  }
+
+  /* Ribbon */
+  .ribbon{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 18px;
+    background: var(--navy-deep);
+    border-radius: 10px;
+    color: var(--ice);
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    margin-bottom: 18px;
+  }
+  .ribbon .dot-row{ display:flex; gap:6px; }
+  .ribbon .dot{ width:8px; height:8px; border-radius:50%; background: rgba(202,220,252,.35); }
+  .ribbon .dot:first-child{ background: var(--gold); }
+  .ribbon .fname{ opacity:.85; }
+
+  /* Report canvas */
+  .canvas{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(20,26,70,.04), 0 12px 32px rgba(20,26,70,.06);
+    min-height: 560px;
+    overflow: hidden;
+  }
+  .page{ display:none; padding: 40px 40px 36px; }
+  .page.active{ display:block; animation: fade .35s ease; }
+  @keyframes fade{ from{ opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 11.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 10px;
+  }
+  h1.title{
+    font-size: 34px;
+    line-height: 1.15;
+    margin: 0 0 12px;
+    color: var(--navy-deep);
+  }
+  h2.title{
+    font-size: 26px;
+    margin: 0 0 8px;
+    color: var(--navy-deep);
+  }
+  .sub{
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.55;
+    max-width: 620px;
+    margin: 0 0 28px;
+  }
+
+  /* KPI tiles */
+  .kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 6px; }
+  .kpi{
+    background: var(--ice-tint);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 16px;
+  }
+  .kpi .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--navy);
+    display:block;
+    margin-bottom: 6px;
+  }
+  .kpi .lbl{ font-size: 12.5px; color: var(--muted); line-height:1.4; }
+
+  .spark{ margin-top: 30px; opacity:.9; }
+
+  /* Visual proof row: PBI chart + SQL editor */
+  .proof-row{
+    display:grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-top: 30px;
+  }
+  .proof-card{
+    background: var(--navy-deep);
+    border-radius: 12px;
+    padding: 16px 16px 14px;
+    overflow: hidden;
+  }
+  .proof-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 12px;
+  }
+  .proof-head .dots{ display:flex; gap:5px; }
+  .proof-head .dots span{ width:7px; height:7px; border-radius:50%; background: rgba(202,220,252,.3); }
+  .proof-head .fname{
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 10.5px; color: var(--ice); opacity:.65;
+  }
+  .bars{
+    display:flex; align-items:flex-end; gap: 8px;
+    height: 92px;
+    padding: 0 2px;
+  }
+  .bars .bar{
+    flex:1;
+    background: linear-gradient(180deg, var(--gold), #C97F1F);
+    border-radius: 3px 3px 0 0;
+  }
+  .bars .bar:nth-child(even){
+    background: linear-gradient(180deg, var(--ice), #93AEDD);
+  }
+  .axis-labels{
+    display:flex; justify-content:space-between;
+    margin-top: 8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 9px; color: var(--ice); opacity:.5;
+  }
+  .sql-code{
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 11.5px;
+    line-height: 1.75;
+    white-space: pre;
+    overflow-x: auto;
+    color: rgba(202,220,252,.75);
+  }
+  .sql-code .kw{ color: var(--gold); }
+  .sql-code .fn{ color: #8FD3C4; }
+  .sql-code .id{ color: var(--ice); }
+  .sql-code .cm{ color: rgba(202,220,252,.4); font-style: italic; }
+
+  .rows{ display:flex; flex-direction:column; gap: 2px; margin-top: 8px; }
+  .row{
+    display:flex; gap:16px; align-items:flex-start;
+    padding: 16px 4px;
+    border-top: 1px solid var(--line);
+  }
+  .row:first-child{ border-top:none; }
+  .row .idx{
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 12px; color: var(--gold); font-weight:600;
+    width: 26px; padding-top: 3px; flex-shrink:0;
+  }
+  .row .rt{ font-weight:600; font-size:15.5px; color: var(--navy-deep); margin-bottom:4px; }
+  .row .rb{ font-size: 13.5px; color: var(--muted); line-height:1.5; }
+
+  /* Fields list (skills) */
+  .field-group{ margin-bottom: 22px; }
+  .field-group h3{
+    font-size: 12px; letter-spacing:.08em; text-transform:uppercase;
+    color: var(--muted); margin: 0 0 10px; font-weight:600;
+  }
+  .field-list{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .field{
+    display:flex; align-items:center; gap:7px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .field .ftype{
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 11px; font-weight:700;
+    color: var(--navy);
+    background: var(--ice-tint);
+    border-radius:4px;
+    width:18px; height:18px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+
+  /* Contact */
+  .contact-grid{ display:flex; flex-direction:column; gap:10px; max-width: 420px; }
+  .contact-item{
+    display:flex; align-items:center; gap:12px;
+    padding: 13px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-decoration:none;
+    color: var(--text);
+    font-size: 14.5px;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .contact-item:hover{ border-color: var(--navy); background: var(--ice-tint); }
+  .contact-item .ic{
+    width: 30px; height:30px; border-radius:50%;
+    background: var(--navy);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:13px; flex-shrink:0;
+  }
+  .status{
+    margin-top: 22px;
+    font-size: 13px; color: var(--muted);
+    display:flex; align-items:center; gap:8px;
+  }
+  .status .pulse{
+    width:8px; height:8px; border-radius:50%; background:#3FB27F;
+    box-shadow: 0 0 0 0 rgba(63,178,127,.5);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(63,178,127,.45); }
+    70%{ box-shadow:0 0 0 7px rgba(63,178,127,0); }
+    100%{ box-shadow:0 0 0 0 rgba(63,178,127,0); }
+  }
+
+  /* Tab bar — Power BI page-tab style */
+  .tabbar{
+    position: sticky; bottom: 16px;
+    margin-top: 16px;
+    display:flex; justify-content:center;
+  }
+  .tabs{
+    display:flex; gap:2px;
+    background: var(--navy-deep);
+    border-radius: 12px;
+    padding: 5px;
+    box-shadow: 0 8px 24px rgba(20,26,70,.25);
+  }
+  .tab{
+    font-family:'IBM Plex Mono',monospace;
+    font-size: 12.5px;
+    letter-spacing:.03em;
+    color: var(--ice);
+    opacity: .65;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .tab:hover{ opacity:1; }
+  .tab.active{
+    background: var(--gold);
+    color: var(--navy-deep);
+    opacity:1;
+    font-weight:600;
+  }
+
+  @media (max-width: 640px){
+    .app{ padding: 18px 12px 90px; }
+    .page{ padding: 28px 20px 28px; }
+    h1.title{ font-size: 26px; }
+    .kpis{ grid-template-columns: 1fr; }
+    .proof-row{ grid-template-columns: 1fr; }
+    .tabs{ gap:1px; }
+    .tab{ padding: 9px 11px; font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="ribbon">
+    <span class="fname">sampath_avusherla_portfolio.pbix</span>
+    <div class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  </div>
+
+  <div class="canvas">
+
+    <!-- PAGE 1: OVERVIEW -->
+    <section class="page active" id="page-overview">
+      <p class="eyebrow">Report / Overview</p>
+      <h1 class="title display">Turning warehouse, procurement &amp; transportation<br>data into decisions.</h1>
+      <p class="sub">Business Intelligence Analyst building Power BI reporting for supply chain &amp; logistics operations — from raw data to governed, stakeholder-ready dashboards.</p>
+
+      <div class="kpis">
+        <div class="kpi">
+          <span class="num mono">3+</span>
+          <span class="lbl">Years building enterprise Power BI solutions</span>
+        </div>
+        <div class="kpi">
+          <span class="num mono">6</span>
+          <span class="lbl">Core platforms in daily use — Power BI to Snowflake</span>
+        </div>
+        <div class="kpi">
+          <span class="num mono">Toronto, ON</span>
+          <span class="lbl">Open to BI Analyst / Developer roles across Canada</span>
+        </div>
+      </div>
+
+      <svg class="spark" width="100%" height="54" viewBox="0 0 600 54" preserveAspectRatio="none">
+        <polyline points="0,40 60,32 120,36 180,20 240,26 300,14 360,22 420,10 480,16 540,6 600,12"
+          fill="none" stroke="#CADCFC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline points="0,40 60,32 120,36 180,20 240,26 300,14 360,22 420,10 480,16 540,6 600,12"
+          fill="none" stroke="#E8A33D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          stroke-dasharray="620" stroke-dashoffset="620">
+          <animate attributeName="stroke-dashoffset" from="620" to="0" dur="1.6s" fill="freeze" begin="0.2s" />
+        </polyline>
+      </svg>
+
+      <div class="proof-row">
+        <div class="proof-card">
+          <div class="proof-head">
+            <span class="fname">Power BI — report_visual</span>
+            <div class="dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="bars">
+            <div class="bar" style="height:38%"></div>
+            <div class="bar" style="height:62%"></div>
+            <div class="bar" style="height:48%"></div>
+            <div class="bar" style="height:80%"></div>
+            <div class="bar" style="height:56%"></div>
+            <div class="bar" style="height:70%"></div>
+          </div>
+          <div class="axis-labels">
+            <span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span>
+          </div>
+        </div>
+
+        <div class="proof-card">
+          <div class="proof-head">
+            <span class="fname">query.sql</span>
+            <div class="dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="sql-code"><span class="cm">-- data quality check</span>
+<span class="kw">SELECT</span>
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="id">total_rows</span>,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> <span class="id">id</span>) <span class="kw">AS</span> <span class="id">unique_ids</span>,
+    <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> <span class="id">amount</span> <span class="kw">IS NULL</span>
+        <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0 <span class="kw">END</span>) <span class="kw">AS</span> <span class="id">null_amounts</span>
+<span class="kw">FROM</span> <span class="id">fact_records</span>;</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 2: FOCUS AREAS -->
+    <section class="page" id="page-focus">
+      <p class="eyebrow">Report / Focus Areas</p>
+      <h2 class="title display">Where the reporting lives</h2>
+      <p class="sub">Analytics built around real supply chain and logistics workflows.</p>
+
+      <div class="rows">
+        <div class="row">
+          <span class="idx mono">01</span>
+          <div>
+            <div class="rt">Warehouse Management Reporting</div>
+            <div class="rb">Dashboards validating data flow across WMS platforms into staging tables.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="idx mono">02</span>
+          <div>
+            <div class="rt">Customer Focus, SLA &amp; Invoice Reporting</div>
+            <div class="rb">Built SLA and invoice compliance reports for apparel and CPG customers, supporting on-time performance tracking and billing accuracy.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="idx mono">03</span>
+          <div>
+            <div class="rt">Manual Data Capture Automation</div>
+            <div class="rb">Built PowerApps forms and SharePoint lists, then used Power Automate to route that data into existing backend and staging tables.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="idx mono">04</span>
+          <div>
+            <div class="rt">Data Access &amp; Governance</div>
+            <div class="rb">Implemented Row-Level Security, page-level security, and incremental refresh to keep reports secure, current, and performant.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 3: SKILLS -->
+    <section class="page" id="page-skills">
+      <p class="eyebrow">Report / Fields</p>
+      <h2 class="title display">Skills &amp; tools</h2>
+      <p class="sub">The stack behind the dashboards, grouped like a field list.</p>
+
+      <div class="field-group">
+        <h3>Visualization &amp; Modeling</h3>
+        <div class="field-list">
+          <span class="field"><span class="ftype">▤</span>Power BI Desktop</span>
+          <span class="field"><span class="ftype">▤</span>Power BI Service</span>
+          <span class="field"><span class="ftype">Σ</span>DAX</span>
+          <span class="field"><span class="ftype">M</span>Power Query</span>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <h3>Data Platforms</h3>
+        <div class="field-list">
+          <span class="field"><span class="ftype">⛁</span>SQL Server</span>
+          <span class="field"><span class="ftype">⛁</span>Snowflake</span>
+          <span class="field"><span class="ftype">⇄</span>Matillion</span>
+          <span class="field"><span class="ftype">☁</span>Azure Blob Storage</span>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <h3>Automation &amp; Governance</h3>
+        <div class="field-list">
+          <span class="field"><span class="ftype">◇</span>PowerApps</span>
+          <span class="field"><span class="ftype">⚡</span>Power Automate</span>
+          <span class="field"><span class="ftype">▦</span>SharePoint Online</span>
+          <span class="field"><span class="ftype">🔒</span>Row-Level Security</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: CONTACT -->
+    <section class="page" id="page-contact">
+      <p class="eyebrow">Report / Contact</p>
+      <h2 class="title display">Let's connect</h2>
+      <p class="sub">Open to Business Intelligence Analyst and Developer roles across Canada.</p>
+
+      <div class="contact-grid">
+        <a class="contact-item" href="mailto:sampath.avusherla@gmail.com">
+          <span class="ic">@</span> sampath.avusherla@gmail.com
+        </a>
+        <a class="contact-item" href="tel:+12899929808">
+          <span class="ic">☎</span> 289-992-9808
+        </a>
+        <a class="contact-item" href="https://linkedin.com/in/sampathavusherla" target="_blank" rel="noopener">
+          <span class="ic">in</span> linkedin.com/in/sampathavusherla
+        </a>
+        <div class="contact-item" style="cursor:default;">
+          <span class="ic">◎</span> Toronto, ON
+        </div>
+      </div>
+
+      <div class="status"><span class="pulse"></span> Actively looking — quick to respond</div>
+    </section>
+
+  </div>
+
+  <div class="tabbar">
+    <div class="tabs">
+      <button class="tab active" data-page="overview">Overview</button>
+      <button class="tab" data-page="focus">Focus Areas</button>
+      <button class="tab" data-page="skills">Skills</button>
+      <button class="tab" data-page="contact">Contact</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const pages = document.querySelectorAll('.page');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.page;
+      tabs.forEach(t => t.classList.toggle('active', t === tab));
+      pages.forEach(p => p.classList.toggle('active', p.id === 'page-' + target));
+    });
+  });
+</script>
+
+</body>
+</html>
